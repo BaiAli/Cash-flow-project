@@ -1,0 +1,106 @@
+{% load static %}
+
+{% block content %}
+    <div class="container-fluid container-home">
+    <div class="row">
+      <div class="col-md-6">
+        <h1>My categories</h1>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-2">
+          <a class="btn btn-primary" href="{% url 'category_create' %}" role="button">Create category</a>
+      </div>
+    </div>
+  </div>
+    {% for message in messages %}
+        {% if message %}
+            <div class="alert alert-info" role="alert">
+                {{ message }}
+            </div>
+        {% endif %}
+    {% endfor %}
+    <div class="row">
+      <div class="col-md-2">
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">Relationships</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Inflow</td>
+              <td>{{ categories_inflow }}</td>
+            </tr>
+            <tr>
+              <td>Outflow</td>
+              <td>{{ categories_outflow }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col">Code</th>
+          <th scope="col">Name</th>
+          <th scope="col">Registered at</th>
+          <th scope="col">Registered by</th>
+          <!--<th scope="col">Inflow relations</th>
+          <th scope="col">Outflow relations</th>-->
+          <th scope="col">Shares</th>
+        </tr>
+      </thead>
+      <tbody>
+    {% if categories %}
+        
+        {% for category in categories %}
+        <tr>
+            <td><a href="{% url 'category_detail' category.id %}">{{ category.code }}</a>
+            </td>
+            <td>{{ category.name }}</td>
+            <td>{{ category.registered_at|date:"d/m/Y" }}</td>
+            <td>{{ category.registered_by }}</td>
+{#            <td>{{ categories_inflow }}</td>#}
+{#            <td>{{ categories_outflow }}</td>#}
+            <td>
+{#              <button type="button" class="btn btn-outline">#}
+{#                <a href="{% url 'category_detail' category.id %}">#}
+{#                  <i class="glyphicon glyphicon-eye-open"></i>#}
+{#                </a>#}
+{#                  Detail#}
+{#              </button>#}
+{#              <button type="button" class="btn btn-outline" name="edit">#}
+{#                <a href="{% url 'category_edit' category.id %}">#}
+{#                  <i class="glyphicon glyphicon-edit"></i>#}
+{#                </a>#}
+{#                  Edit#}
+{#              </button>#}
+{#              <button type="button" class="btn btn-outline">#}
+{#                <a href="{% url 'category_delete' category.id %}">#}
+{#                  <i class="glyphicon glyphicon-trash"></i>#}
+{#                </a>#}
+{#                  Delete#}
+{#              </button>#}
+                <form action="{% url 'category_detail' category.id %}">
+                    <input type="submit" value="Detail">
+                </form>
+                <form action="{% url 'category_edit' category.id %}">
+                    <input type="submit" value="Edit">
+                </form>
+                <form action="{% url 'category_delete' category.id %}">
+                    <input type="submit" value="Delete">
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+        
+    {% else %}
+        <td>Categories not found.</td>
+    {% endif %}
+      </tbody>
+    </table>
+{% endblock %}

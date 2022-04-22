@@ -1,0 +1,557 @@
+import calendar
+from datetime import datetime
+from multiprocessing import context
+from pyexpat import model
+from re import template
+from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import redirect, render
+from django.contrib.auth.models import User
+from django.contrib import messages
+from .form import UserUpdateForm, ProfileUpdateForm, ContactsForm, BankCardForm
+from django.views.generic.edit import CreateView
+from django.views.generic import ListView
+from django.db.models import Avg, Count, Min, ProtectedError, Sum, CharField, Value
+
+from .models import BankCard, Category, Inflow
+
+
+# Create your views here.
+
+def home(request):
+    return render(request, "authentication/baseFront.html")
+
+
+def signup(request):
+    if request.method == "POST":
+        username = request.POST['username']
+        f_name = request.POST['f_name']
+        s_name = request.POST['s_name']
+        email = request.POST['email']
+        password = request.POST['password']
+        c_password = request.POST['c_password']
+
+        if User.objects.filter(username=username):
+            messages.error(request, "Username already exist")
+            return redirect('signup')
+
+        if User.objects.filter(email=email):
+            messages.error(request, "Email address already exist")
+            return redirect('signup')
+
+        if password != c_password:
+            messages.error(request, "Passwords didn't match")
+
+        else:
+            myUser = User.objects.create_user(username, email, password)
+            myUser.first_name = f_name
+            myUser.last_name = s_name
+            myUser.email = email
+            myUser.save()
+            messages.success(request, "Your account has been successfully created")
+            return redirect('signin')
+    return render(request, "authentication/signup.html")
+
+
+def signin(request):
+    if request.method == "POST":
+        username = request.POST['username']
+        password = request.POST['password']
+
+        user = authenticate(username=username, password=password)
+
+        if user is not None:
+            login(request, user)
+            f_name = user.first_name
+            return render(request, "authentication/profile.html", {'f_name': f_name})
+        else:
+            messages.error(request, "Bad Credentials!")
+            return redirect('signin')
+
+    return render(request, "authentication/signin.html")
+
+
+def signout(request):
+    logout(request)
+    messages.success(request, "Logged out successfully")
+    return redirect('home')
+
+
+def features(request):
+    return render(request, "authentication/features.html")
+
+
+def contacts(request):
+    error = ' '
+    if request.method == 'POST':
+        form = ContactsForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('contact')
+        else:
+            error = 'form is incorrect'
+
+    form = ContactsForm()
+    contacts = {
+        'form': form,
+        'error': error
+    }
+    return render(request, "authentication/contactuspage.html", contacts)
+
+
+def why(request):
+    return render(request, "authentication/whycashflow.html")
+
+
+def profile(request):
+    u_form = UserUpdateForm()
+    p_form = ProfileUpdateForm()
+
+    context = {
+        'u_form': u_form,
+        'p_form': p_form
+    }
+    return render(request, "authentication/profile.html", context)
+
+
+# class AddNewBankCard(CreateView):
+#     model = BankCard
+#     form_class = BankCardForm
+#     template_name = 'authentication/addnewbankcard.html'
+
+def addNewBankCard(request):
+    if request.method == "POST":
+        form = BankCardForm(request.POST)
+        if form.is_valid():
+            card_name = form.cleaned_data.get('cardName')
+            card_balance = form.cleaned_data.get('cardBalance')
+
+            model = BankCard.objects.filter(cardName=card_name)
+            new_balance = model[0].cardBalance + card_balance
+            model.update(cardBalance=new_balance)
+
+            return redirect('account')
+
+    else:
+        form = BankCardForm()
+
+    context = {
+        'form': form
+    }
+    return render(request, "authentication/addnewbankcard.html", context)
+
+
+# class AddBankName(CreateView):
+#     model = Category  
+#     template_name = 'authentication/addbankname.html'
+#     fields = '__all__'
+
+def addBankName(request):
+    if request.method == "POST":
+        card_name = request.POST["name"]
+
+        model = BankCard(cardName=card_name, cardBalance=0)
+        model.save()
+        return redirect('bankcard')
+    return render(request, "authentication/addbankname.html")
+
+
+class AccountListView(ListView):
+    model = BankCard
+    context_object_name = 'account_list'
+    template_name = 'authentication/account.html'
+
+
+@login_required
+def edit(request):
+    if request.method == 'POST':
+        u_form = UserUpdateForm(request.POST, instance=request.user)
+        p_form = ProfileUpdateForm(request.POST, request.FILES, instance=request.user.profile)
+
+        if u_form.is_valid() and p_form.is_valid():
+            u_form.save()
+            p_form.save()
+            return redirect('profile')
+    else:
+        u_form = UserUpdateForm(instance=request.user)
+        p_form = ProfileUpdateForm(instance=request.user)
+
+    context = {
+        'u_form': u_form,
+        'p_form': p_form
+    }
+
+    return render(request, "authentication/edit.html", context)
+
+
+def inflow_edit(request, pk):
+    try:
+        categories = None
+        registered_by = request.user.get_username()
+        categories = Category.objects.filter(
+            registered_by__iexact=request.user.get_username()
+        )
+        inflow = get_object_or_404(
+            Inflow,
+            pk=pk,
+            registered_by=registered_by
+        )
+    except Inflow.DoesNotExist as e:
+        raise Http404('Inflow does not exist')
+    except Http404 as e:
+        return HttpResponse('404')
+    return render(
+        request,
+        'authentication/inflow_edit.html',
+        {
+            'inflow': inflow,
+            'categories': categories,
+        }
+    )
+
+
+def inflow_delete(request, pk):
+    try:
+        registered_by = request.user.get_username()
+        inflow = Inflow.objects.filter(
+            pk=pk,
+            registered_by=registered_by
+        )
+        if len(inflow) > 0:
+            was_deleted = Inflow.objects.filter(
+                pk=pk,
+                registered_by=registered_by
+            ).delete()
+            if was_deleted:
+                messages.success(request, 'Inflow was deleted!')
+                return render(request, 'authentication/inflow_list.html')
+            else:
+                messages.error(request, 'An error was ocurred!')
+                return render(request, 'authentication/inflow_list.html')
+        else:
+            return HttpResponse('Inflow not found.')
+    except Http404 as e:
+        raise HttpResponse('404' + str(e))
+    return redirect('inflow_list.html')
+
+
+def inflow_update(request, pk):
+    try:
+        name = request.POST['name']
+        category = Category.objects.filter(
+            registered_by__iexact=request.user.username,
+            id__iexact=request.POST['categories']
+        )[0]
+        registered_at = request.POST['reg_date']
+        registered_by = request.user.username
+        value = request.POST['value']
+
+        inflow = Inflow.objects.filter(
+            pk=pk,
+            registered_by=registered_by
+        ).update(
+            name=name,
+            value=value,
+            category=category,
+            registered_at=registered_at,
+            registered_by=registered_by
+        )
+        messages.success(request, "Inflow was updated!")
+    except Exception as exc:
+        messages.error(request, 'An error was ocurred.')
+    return redirect('inflow_detail/' + str(pk))
+
+
+def inflow_create(request):
+    categories = None
+    no_categories = False
+    try:
+        categories = Category.objects.filter(
+            registered_by__iexact=request.user.username
+        )
+        if categories.count() == 0:
+            no_categories = True
+    except Exception as exc:
+        messages.error(request, 'error')
+    return render(
+        request,
+        'authentication/inflow_create.html',
+        {
+            'messages': messages,
+            'categories': categories,
+            'no_categories': no_categories,
+        }
+    )
+
+
+def inflow_save(request):
+    try:
+        if request.POST:
+            category = Category.objects.filter(
+                registered_by__iexact=request.user.username,
+                id__iexact=request.POST['categories']
+            )[0]
+
+            inflow = Inflow()
+            inflow.name = request.POST['name']
+            inflow.category = category
+            inflow.registered_at = request.POST['reg_date']
+            inflow.registered_by = request.user.username
+            inflow.value = request.POST['value']
+            inflow.save()
+
+            messages.success(request, "A new inflow was created!")
+    except Exception as exc:
+        messages.error(request, 'An error has occurred' + str(exc))
+        return redirect('inflow_list')
+    return redirect('inflow_list')
+
+
+def inflow_list(request):
+    try:
+
+        template_name = 'inflow_list.html'
+        str_date = get_first_day_month()
+        registered_by = request.user.get_username()
+        print(str_date)
+        inflows = Inflow.objects.filter(
+            registered_at__gte=str_date,
+            registered_by=registered_by
+        )
+    except Inflow.DoesNotExist as e:
+        raise Http404('Inflow does not exist')
+    except Http404 as exc:
+        return HttpResponse('404')
+    return render(
+        request,
+        'authentication/inflow_list.html',
+        {
+            'inflows': inflows
+        }
+    )
+
+
+def inflow_detail(request, pk):
+    try:
+        registered_by = request.user.get_username()
+        inflow = get_object_or_404(
+            Inflow,
+            pk=pk,
+            registered_by=registered_by
+        )
+    except Inflow.DoesNotExist as exc:
+        raise Http404('Inflow does not exist')
+    except Http404 as exc:
+        return HttpResponse('404')
+    return render(request, 'authentication/inflow_detail.html', {'inflow': inflow})
+
+
+def get_first_day_month():
+    date = None
+
+    try:
+        month = timezone.now().month
+        if len(str(month)) == 1:
+            month = int('0' + str(month))
+
+        year = timezone.now().year
+        month_range = calendar.monthrange(year, int(month))
+        day = month_range[1] - (month_range[1] - 1)
+        date = datetime(year, month, day)
+
+    except ValueError as exc:
+        print(exc, "ValueError")
+    except TypeError as exc:
+        print(exc, "TypeError")
+    return date
+
+
+# def get_my_current_balance():
+#     balance = 0.00
+#     inflow_amount = 0.00
+#     outflow_amount = 0.00
+#
+#     try:
+#
+#         first_day = get_first_day_month()
+#
+#         inflow_amount_on_this_month = Inflow.objects.filter(
+#             registered_at__gt=first_day
+#         ).aggregate(
+#             amount=Sum('value')
+#         )
+#
+#         outflow_amount_on_this_month = Outflow.objects.filter(
+#             registered_at__gt=first_day
+#         ).aggregate(
+#             amount=Sum('value')
+#         )
+#
+#         inflow_amount = inflow_amount_on_this_month['amount']
+#         outflow_amount = outflow_amount_on_this_month['amount']
+#         balance = inflow_amount - outflow_amount
+#
+#     except ValueError as exc:
+#         print(exc, "Wow, An ValueError was occurred")
+#     except TypeError as exc:
+#         print(exc, "Wow, An TypeError was occurred")
+#     return balance, inflow_amount, outflow_amount
+
+
+def category_update(request, pk):
+    try:
+        code = request.POST['code']
+        name = request.POST['name']
+        description = request.POST['description']
+        registered_at = request.POST['reg_date']
+        registered_by = request.user.get_username()
+
+        category = Category.objects.filter(
+            pk=pk,
+            registered_by=request.user.get_username()
+        ).update(
+            code=code,
+            name=name,
+            description=description,
+            registered_at=registered_at,
+            registered_by=registered_by
+        )
+
+        messages.success(request, "Category was updated!")
+    except Exception as exc:
+        messages.error(request, 'An error was occurred.')
+    return redirect("category_detail/" + str(pk))
+
+
+def category_delete(request, pk):
+    try:
+        category = Category.objects.filter(
+            pk=pk,
+            registered_by=request.user.get_username()
+        )
+        if len(category) > 0:
+            was_deleted = Category.objects.filter(
+                pk=pk,
+                registered_by=request.user.get_username()
+            ).delete()
+            if was_deleted:
+                messages.success(request, 'Category was deleted!')
+                return render(request, 'authentication/category_list.html')
+            else:
+                messages.error(request, 'An error was occurred!')
+                return render(request, 'authentication/category_list.html')
+        else:
+            return HttpResponse('Category not found.')
+    except ProtectedError as exc:
+        messages.error(
+            request,
+            "Cannot delete some instances of model, because they are referenced through protected foreign keys."
+        )
+    except Http404 as e:
+        raise HttpResponse('404' + str(e))
+    return redirect("authentication/category_list")
+
+
+def category_edit(request, pk):
+    try:
+        category = get_object_or_404(
+            Category,
+            pk=pk,
+            registered_by=request.user.get_username()
+        )
+    except Category.DoesNotExist as e:
+        raise Http404('Category does not exist')
+    except Http404 as e:
+        return HttpResponse('404')
+    return render(
+        request,
+        'authentication/category_edit.html',
+        {
+            'category': category,
+        }
+    )
+
+
+def category_detail(request, pk):
+    try:
+        category = get_object_or_404(
+            Category,
+            pk=pk,
+            registered_by=request.user.get_username()
+        )
+    except Category.DoesNotExist as exc:
+        raise Http404('Category does not exist')
+    except Http404 as exc:
+        return HttpResponse('404')
+    return render(request, 'authentication/category_detail.html', {'category': category})
+
+
+def category_list(request):
+    try:
+        categories_inflow_count = 0
+        categories_outflow_count = 0
+
+        categories = Category.objects.filter(
+            registered_by=request.user.get_username()
+        )
+        for category in categories:
+            categories_inflow = Inflow.objects.filter(
+                registered_by=request.user.get_username(),
+                category=category
+            )
+            # categories_outflow = Outflow.objects.filter(
+            #     registered_by=request.user.get_username(),
+            #     category=category
+            # )
+
+            if categories_inflow:
+                categories_inflow_count += categories_inflow.count()
+
+            # if categories_outflow:
+            #     categories_outflow_count += categories_outflow.count()
+
+    except Category.DoesNotExist as e:
+        raise Http404('Category does not exist')
+    except Http404 as exc:
+        return HttpResponse('404')
+    return render(
+        request,
+        'authentication/category_list.html',
+        {
+            'categories': categories,
+            'categories_inflow': categories_inflow_count,
+            'categories_outflow': categories_outflow_count,
+        }
+    )
+
+
+def category_save(request):
+    try:
+        if request.POST:
+            category = Category()
+            category.code = request.POST['code']
+            category.name = request.POST['name']
+            category.description = request.POST['description']
+            category.registered_at = request.POST['reg_date']
+            category.registered_by = request.user.username
+            category.save()
+
+            messages.success(request, "A new category was created!")
+    except Exception as exc:
+        print(exc)
+        messages.error(request, 'An error has occurred' + str(exc))
+        return redirect('authentication/category_list')
+    return redirect('category_list')
+
+
+def category_create(request):
+    try:
+        template_name = "category_create"
+    except Exception as exc:
+        messages.error(request, 'error')
+    return render(
+        request, 'authentication/category_create.html',
+    )
