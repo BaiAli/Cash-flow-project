@@ -129,4 +129,18 @@ class Inflow(models.Model):
         return now - datetime.timedelta(days=1) <= self.registered_at <= now
 
 
+class Outflow(models.Model):
+    name = models.CharField(null=False, max_length=255)
+    value = models.DecimalField(null=False, max_digits=10, decimal_places=2)
+    category = models.ForeignKey(Category, on_delete=models.PROTECT)
+    registered_at = models.DateTimeField()
+    registered_by = models.CharField(null=False, max_length=55)
+    billet_code = models.IntegerField(null=True, blank=True)
+    payment_code = models.IntegerField(null=True, blank=True)
 
+    def __str__(self):
+        return self.name
+
+    def was_registered_recently(self):
+        now = timezone.now()
+        return now - datetime.timedelta(days=1) <= self.registered_at <= now

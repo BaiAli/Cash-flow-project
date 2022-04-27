@@ -11,7 +11,7 @@
         {% csrf_token %}
 
         <div class="form-group row">
-          <label for="inputEmail3" class="col-sm-2 col-form-label">Nome:</label>
+          <label for="inputEmail3" class="col-sm-2 col-form-label">Name:</label>
           <div class="col-sm-4">
             <input type="text" class="form-control" id="name" name="name" value="{{ inflow.name }}" required="true">
           </div>
@@ -33,7 +33,7 @@
             <input type="text" class="form-control" name="reg_date" id="reg_date" value='{{ inflow.registered_at|date:"d/m/Y" }}' readonly="true" required="true">
           </div>
 
-          <label for="inputEmail3" class="col-sm-2 col-form-label">Valor $:</label>
+          <label for="inputEmail3" class="col-sm-2 col-form-label">Value $:</label>
           <div class="col-sm-4">
             <input type="number" class="form-control" step="any" name="value" id="value" value="{{ inflow.value }}" required="true">
           </div>

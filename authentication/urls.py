@@ -30,6 +30,14 @@ urlpatterns = [
     path('category_edit/<int:pk>', views.category_edit, name='category_edit'),
     path('category_edit/<int:pk>/update', views.category_update, name='category_update'),
     path('category_edit/<int:pk>/delete', views.category_delete, name='category_delete'),
+    path('outflow_create', views.outflow_create, name='outflow_create'),
+    path('outflow_save', views.outflow_save, name='outflow_save'),
+    path('outflow_list', views.outflow_list, name='outflow_list'),
+    path('outflow_list/', views.outflow_list, name='outflow_list'),
+    path('outflow_detail/<int:pk>', views.outflow_detail, name='outflow_detail'),
+    path('outflow_edit/<int:pk>', views.outflow_edit, name='outflow_edit'),
+    path('outflow_edit/<int:pk>/update', views.outflow_update, name='outflow_update'),
+    path('outflow_edit/<int:pk>/delete', views.outflow_delete, name='outflow_delete'),
 ]
 
 if settings.DEBUG:

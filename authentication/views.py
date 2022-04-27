@@ -16,7 +16,7 @@ from django.views.generic.edit import CreateView
 from django.views.generic import ListView
 from django.db.models import Avg, Count, Min, ProtectedError, Sum, CharField, Value
 
-from .models import BankCard, Category, Inflow
+from .models import BankCard, Category, Inflow, Outflow
 
 
 # Create your views here.
@@ -187,6 +187,7 @@ def edit(request):
     return render(request, "authentication/edit.html", context)
 
 
+@login_required
 def inflow_edit(request, pk):
     try:
         categories = None
@@ -213,6 +214,7 @@ def inflow_edit(request, pk):
     )
 
 
+@login_required
 def inflow_delete(request, pk):
     try:
         registered_by = request.user.get_username()
@@ -235,9 +237,10 @@ def inflow_delete(request, pk):
             return HttpResponse('Inflow not found.')
     except Http404 as e:
         raise HttpResponse('404' + str(e))
-    return redirect('inflow_list.html')
+    return redirect('authentication/inflow_list.html')
 
 
+@login_required
 def inflow_update(request, pk):
     try:
         name = request.POST['name']
@@ -262,9 +265,10 @@ def inflow_update(request, pk):
         messages.success(request, "Inflow was updated!")
     except Exception as exc:
         messages.error(request, 'An error was ocurred.')
-    return redirect('inflow_detail/' + str(pk))
+    return redirect('inflow_edit/' + str(pk))
 
 
+@login_required
 def inflow_create(request):
     categories = None
     no_categories = False
@@ -287,6 +291,7 @@ def inflow_create(request):
     )
 
 
+@login_required
 def inflow_save(request):
     try:
         if request.POST:
@@ -310,6 +315,7 @@ def inflow_save(request):
     return redirect('inflow_list')
 
 
+@login_required
 def inflow_list(request):
     try:
 
@@ -334,6 +340,7 @@ def inflow_list(request):
     )
 
 
+@login_required
 def inflow_detail(request, pk):
     try:
         registered_by = request.user.get_username()
@@ -401,6 +408,7 @@ def get_first_day_month():
 #     return balance, inflow_amount, outflow_amount
 
 
+@login_required
 def category_update(request, pk):
     try:
         code = request.POST['code']
@@ -554,4 +562,158 @@ def category_create(request):
         messages.error(request, 'error')
     return render(
         request, 'authentication/category_create.html',
+    )
+
+
+def outflow_delete(request, pk):
+    try:
+        registered_by = request.user.get_username()
+        outflow = Outflow.objects.filter(
+            pk=pk,
+            registered_by=registered_by
+        )
+        if len(outflow) > 0:
+            was_deleted = Outflow.objects.filter(
+                pk=pk,
+                registered_by=registered_by
+            ).delete()
+            if was_deleted:
+                messages.success(request, 'Outflow was deleted!')
+                return render(request, 'authentication/outflow_list.html')
+            else:
+                messages.error(request, 'An error was ocurred!')
+                return render(request, 'authentication/outflow_list.html')
+        else:
+            return HttpResponse('Outflow not found.')
+    except Http404 as e:
+        raise HttpResponse('404' + str(e))
+    return redirect("authentication/outflow_list")
+
+
+def outflow_update(request, pk):
+    try:
+        name = request.POST['name']
+        category = Category.objects.filter(
+            registered_by__iexact=request.user.username,
+            id__iexact=request.POST['categories']
+        )[0]
+        registered_at = request.POST['reg_date']
+        registered_by = request.user.username
+        value = request.POST['value']
+
+        outflow = Outflow.objects.filter(
+            pk=pk,
+            registered_by=registered_by
+        ).update(
+            name=name,
+            value=value,
+            category=category,
+            registered_at=registered_at,
+            registered_by=registered_by
+        )
+        messages.success(request, "Outflow was updated!")
+    except Exception as exc:
+        messages.error(request, 'An error was ocurred.')
+    return redirect("authentication/outflow_detail/" + str(pk))
+
+
+def outflow_edit(request, pk):
+    try:
+        categories = None
+        registered_by = request.user.get_username()
+        categories = Category.objects.filter(
+            registered_by__iexact=request.user.get_username()
+        )
+        outflow = get_object_or_404(
+            Outflow, pk=pk,
+            registered_by=registered_by
+        )
+    except Outflow.DoesNotExist as e:
+        raise Http404('Outflow does not exist')
+    except Http404 as e:
+        return HttpResponse('404')
+    return render(
+        request,
+        'authentication/outflow_edit.html',
+        {
+            'outflow': outflow,
+            'categories': categories,
+        }
+    )
+
+
+def outflow_detail(request, pk):
+    try:
+        registered_by = request.user.get_username()
+        outflow = get_object_or_404(
+            Outflow, pk=pk,
+            registered_by=registered_by
+        )
+    except Outflow.DoesNotExist as exc:
+        raise Http404('Outflow does not exist')
+    except Http404 as exc:
+        return HttpResponse('404')
+    return render(request, 'authentication/outflow_detail.html', {'outflow': outflow})
+
+
+def outflow_list(request):
+    try:
+        template_name = 'authentication/outflow_list.html'
+        str_date = get_first_day_month()
+        registered_by = request.user.get_username()
+
+        outflows = Outflow.objects.filter(
+            registered_at__gte=str(str_date),
+            registered_by=registered_by
+        )
+    except Outflow.DoesNotExist as e:
+        raise Http404('Outflow does not exist')
+    except Http404 as exc:
+        return HttpResponse('404')
+    return render(request, 'authentication/outflow_list.html', {'outflows': outflows})
+
+
+def outflow_save(request):
+    try:
+        if request.POST:
+            category = Category.objects.filter(
+                registered_by__iexact=request.user.username,
+                id__iexact=request.POST['categories']
+            )[0]
+
+            outflow = Outflow()
+            outflow.name = request.POST['name']
+            outflow.category = category
+            outflow.registered_at = request.POST['reg_date']
+            outflow.registered_by = request.user.username
+            outflow.value = request.POST['value']
+            outflow.payment_code = request.POST['payment_code']
+            outflow.billet_code = request.POST['billet_code']
+            outflow.save()
+
+            messages.success(request, "A new outflow was created!")
+    except Exception as exc:
+        messages.error(request, 'Ocorreu um erro' + str(exc))
+        return redirect('authentication/outflow_list')
+    return redirect('outflow_list')
+
+
+def outflow_create(request):
+    categories = None
+    no_categories = False
+    try:
+        categories = Category.objects.filter(
+            registered_by__iexact=request.user.username)
+        if categories.count() == 0:
+            no_categories = True
+    except Exception as exc:
+        messages.error(request, 'erro')
+    return render(
+        request,
+        'authentication/outflow_create.html',
+        {
+            'messages': messages,
+            'categories': categories,
+            'no_categories': no_categories,
+        }
     )
