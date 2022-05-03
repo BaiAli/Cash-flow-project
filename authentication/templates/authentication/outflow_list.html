@@ -4,13 +4,13 @@
     <div class="container-fluid container-home">
     <div class="row">
       <div class="col-md-4">
-        <h1>Minhas Saídas</h1>
+        <h1>My Outflows</h1>
       </div>
     </div>
 
     <div class="row">
       <div class="col-md-2">
-        <a class="btn btn-primary" href="{% url 'outflow_create' %}" role="button">Criar Saída</a>
+        <a class="btn btn-primary" href="{% url 'outflow_create' %}" role="button">Create Outflow</a>
       </div>
     </div>
   </div>
@@ -24,12 +24,12 @@
     <table class="table">
       <thead>
         <tr>
-          <th scope="col">Nome</th>
-          <th scope="col">Categoria</th>
-          <th scope="col">Registrado em</th>
-          <th scope="col">Registrado por</th>
-          <th scope="col">Valor $</th>
-          <th scope="col">Ações</th>
+          <th scope="col">Name</th>
+          <th scope="col">Category</th>
+          <th scope="col">Registered at</th>
+          <th scope="col">Registered by</th>
+          <th scope="col">Value</th>
+          <th scope="col">Shares</th>
         </tr>
       </thead>
       <tbody>
@@ -62,7 +62,7 @@
         </tr>
         {% endfor %}
     {% else %}
-        <td>Saídas não foram encontradas para o mês atual.</td>
+        <td>Outputs were not found for the current month.</td>
     {% endif %}
       </tbody>
     </table>

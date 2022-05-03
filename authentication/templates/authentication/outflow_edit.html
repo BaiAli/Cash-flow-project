@@ -3,7 +3,7 @@
 {% block content %}
 <div class="card">
     <div class="card-header">
-      Editar Saída
+      Edit Outflow
     </div>
     <div class="card-body">
       <ul>
@@ -15,10 +15,10 @@
       </ul>
       <form action="{% url 'cashflow:outflow_update' outflow.id %}" method="post">
         {% csrf_token %}
-        <label>Nome:</label>
+        <label>Name:</label>
         <input type="text" name="name" id="name" value="{{ outflow.name }}" required="true">
         <!--<br>-->
-        <label for="categories">Escolha uma categoria:</label>
+        <label for="categories">Choose a category:</label>
 
         <select name="categories" id="categories" required="true">
           <option value=""></option>
@@ -30,10 +30,10 @@
         <label>Data:</label>
         <input type="date" name="reg_date" id="reg_date" value="{{ outflow.registered_at }}"  required="true">
         <!--<br>-->
-        <label>Valor $:</label>
+        <label>Value:</label>
         <input type="number" step="any" name="value" id="value" value="{{ outflow.value }}"  required="true">
         <!--<br>-->
-        <input class="btn btn-info" type="submit" value="Salvar">
+        <input class="btn btn-info" type="submit" value="Save">
       </form>
     </div>
 </div>

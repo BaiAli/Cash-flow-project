@@ -3,7 +3,7 @@
 {% block content %}
 {% if no_categories %}
   <div class="alert alert-warning" role="alert">
-    <p><strong></strong>Você precisa criar ao menos uma categoria.</p>
+    <p><strong></strong>You need to create at least one category.</p>
   </div>
 {% else %}
 <div class="container-fluid" style="text-align:center;">
@@ -11,7 +11,7 @@
   <div class="card">
     <div class="card-header">
 
-      <h2>Criar Saída</h2>
+      <h2>Create Outflow</h2>
     </div>
     <div class="card-body">
       <form action="{% url 'outflow_save' %}" method="post">
@@ -21,7 +21,7 @@
             <label 
               for="name"
               class="col-sm-2 col-form-label">
-              Nome:
+              Name:
             </label>
             <div class="col-sm-4">
               <input
@@ -35,7 +35,7 @@
 
             <label 
               for="categories">
-              Escolha uma categoria:
+              Choose a category:
             </label>
             <div 
               class="col-sm-3">
@@ -72,7 +72,7 @@
             <label 
               for="value"
               class="col-sm-2 col-form-label">
-              Valor $:
+              Value:
             </label>
             <div
               class="col-sm-4">
@@ -91,7 +91,7 @@
             <label 
               for="payment_code"
               class="col-sm-2 col-form-label">
-              Código de pagamento:
+              Payment code:
             </label>
             <div class="col-sm-4">
               <input 
@@ -106,7 +106,7 @@
             <label 
               for="billet_code"
               class="col-sm-2 col-form-label">
-              Código de cobrança:
+              Billing code:
             </label>
             <div class="col-sm-4">
               <input 
@@ -123,7 +123,7 @@
           class="btn btn-success"
           style="text-align:center;"
           type="submit"
-          value="Salvar">
+          value="Save">
       </form>
 
     </div>

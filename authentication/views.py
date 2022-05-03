@@ -376,36 +376,36 @@ def get_first_day_month():
     return date
 
 
-# def get_my_current_balance():
-#     balance = 0.00
-#     inflow_amount = 0.00
-#     outflow_amount = 0.00
-#
-#     try:
-#
-#         first_day = get_first_day_month()
-#
-#         inflow_amount_on_this_month = Inflow.objects.filter(
-#             registered_at__gt=first_day
-#         ).aggregate(
-#             amount=Sum('value')
-#         )
-#
-#         outflow_amount_on_this_month = Outflow.objects.filter(
-#             registered_at__gt=first_day
-#         ).aggregate(
-#             amount=Sum('value')
-#         )
-#
-#         inflow_amount = inflow_amount_on_this_month['amount']
-#         outflow_amount = outflow_amount_on_this_month['amount']
-#         balance = inflow_amount - outflow_amount
-#
-#     except ValueError as exc:
-#         print(exc, "Wow, An ValueError was occurred")
-#     except TypeError as exc:
-#         print(exc, "Wow, An TypeError was occurred")
-#     return balance, inflow_amount, outflow_amount
+def get_my_current_balance():
+    balance = 0.00
+    inflow_amount = 0.00
+    outflow_amount = 0.00
+
+    try:
+
+        first_day = get_first_day_month()
+
+        inflow_amount_on_this_month = Inflow.objects.filter(
+            registered_at__gt=first_day
+        ).aggregate(
+            amount=Sum('value')
+        )
+
+        outflow_amount_on_this_month = Outflow.objects.filter(
+            registered_at__gt=first_day
+        ).aggregate(
+            amount=Sum('value')
+        )
+
+        inflow_amount = inflow_amount_on_this_month['amount']
+        outflow_amount = outflow_amount_on_this_month['amount']
+        balance = inflow_amount - outflow_amount
+
+    except ValueError as exc:
+        print(exc, "Wow, An ValueError was occurred")
+    except TypeError as exc:
+        print(exc, "Wow, An TypeError was occurred")
+    return balance, inflow_amount, outflow_amount
 
 
 @login_required
@@ -510,16 +510,16 @@ def category_list(request):
                 registered_by=request.user.get_username(),
                 category=category
             )
-            # categories_outflow = Outflow.objects.filter(
-            #     registered_by=request.user.get_username(),
-            #     category=category
-            # )
+            categories_outflow = Outflow.objects.filter(
+                registered_by=request.user.get_username(),
+                category=category
+            )
 
             if categories_inflow:
                 categories_inflow_count += categories_inflow.count()
 
-            # if categories_outflow:
-            #     categories_outflow_count += categories_outflow.count()
+            if categories_outflow:
+                categories_outflow_count += categories_outflow.count()
 
     except Category.DoesNotExist as e:
         raise Http404('Category does not exist')
