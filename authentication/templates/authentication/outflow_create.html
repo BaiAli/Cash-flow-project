@@ -3,11 +3,22 @@
 {% load static %}
 {% block style %}
 <link href="https://fonts.googleapis.com/css2?family=Hubballi&family=Patua+One&family=Ubuntu:wght@300&display=swap" rel="stylesheet">
+
 {% endblock %}
 
 {% block content %}
 {% if no_categories %}
-  <div class="alert alert-warning" role="alert" style="font-family: 'Ubuntu', sans-serif;">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Document</title>
+</head>
+<body>
+   <div class="alert alert-warning" role="alert" style="font-family: 'Ubuntu', sans-serif;">
     <p><strong></strong>You need to create at least one category.</p>
   </div>
 {% else %}
@@ -75,19 +86,20 @@
             </div>
 
             <label 
+            style="padding-right: 93px;"
               for="value"
               >
               Value:
             </label>
             <div
-              class="col-sm-4">
+              class="col-sm-3">
               <input 
                 type="number"
                 class="form-control"
                 step="any"
                 name="value"
                 id="value"
-                value="0.00"
+                value=""
                 required="true">
             </div>
           </div>
@@ -136,3 +148,6 @@
   </div>-->
 {% endif %}
 {% endblock %}
+</body>
+</html>
+ 

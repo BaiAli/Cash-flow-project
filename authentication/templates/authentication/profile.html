@@ -10,9 +10,9 @@
     <div class="container">
         <div class="main">
         {% csrf_token %}
-            <div class="row">
+            <div class="row" style="background-color: #333;">
                 <div class="col-md-4 mt-1">
-                    <div class="card text-center sidebar">
+                    <div class="card text-center sidebar" style="background-color: #333;">
                         <div class="card-body">
                             <img src="{{ user.profile.image.url }}" class="rounded-circle" alt="" width="200px" height="200px">
                             <div class="mt-3">
@@ -22,10 +22,41 @@
                                     <button type="submit" class="btn solid"><a href="{% url 'signout'%}"> Sign Out</a></button>
                                     <button type="submit" class="btn solid"><a href="{% url 'edit' %}">Edit Profile</a></button>
                                 {% endif %}
-                            </div>
+                            </div>  
                         </div>
                     </div>
                 </div>
+                <div class="valuta">
+                    <h2>Money Status</h2>
+                    <div class="money">
+                        <img style="margin-right: 7px;" src="{% static 'authentication/images/tenge.png' %}" alt=""
+                        height="20px" width="20px">
+                        <p>{{tenge}}</p>
+                    </div>
+                    <div class="money">
+                        <img style="margin-right: 7px;" src="{% static 'authentication/images/dolar.png' %}" alt=""
+                        height="20px" width="20px"> 
+                        <p>{{dollar}}</p>
+                    </div><div class="money">
+                        <img style="margin-right: 7px;" src="{% static 'authentication/images/ruble.png' %}" alt=""
+                        height="20px" width="20px">
+                        <p>{{ruble}}</p>
+                    </div>
+                </div> 
+                <div class="inflow">
+                    <h2>Inflow Status</h2>
+                    {% for i in inflow %}
+                        <p>{{i}}  +{{i.value}}</p>
+                        
+                    {% endfor %}
+                </div>
+                <div class="outflow">
+                    <h2>Outflow Status</h2>
+                   {% for i in outfow %}
+                        <p>{{i}} -{{i.value}}</p>
+                    {% endfor%} 
+                </div>
+                
             </div>
         </div>
     </div>

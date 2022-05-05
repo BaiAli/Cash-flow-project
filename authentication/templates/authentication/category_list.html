@@ -1,20 +1,44 @@
 {% extends './baseProfile.html' %}
 {% load static %}
-
+{% block style %}
+{% endblock %}
 {% block content %}
-<section>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{% static 'authentication/css/category_list.css' %}">
+  <title>Document</title>
+</head>
+<body>
+  
+</body>
+</html>
+
+<section class="all">
   <!-- <img class="blob" src="{% static 'authentication/images/blob-back.svg' %}" alt=""> -->
     <div style="font-family: 'Ubuntu', sans-serif;"class="container-fluid container-home" >
     <div class="row">
-      <div class="col-md-6">
-        <h1>My categories</h1>
+      <div class="col-md-6" style="display: flex; font-family: 'Times New Roman', Times, serif;">
+        <img class="time" src="{%  static 'authentication/images/icons8-categories-64 (1).png' %}" height="60px" width="60px" style="margin-bottom: 25px;" alt="">
+        <h1 style="font-size: 2.5rem;
+        color: rgb(0, 0, 0);
+        font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+     margin-left: 15px; margin-right: 100px;">My Categories</h1>
       </div>
     </div>
 
-    <div class="row">
-      <div class="col-md-2">
-          <a class="btn btn-primary" href="{% url 'category_create' %}" role="button">Create category</a>
-      </div>
+    
+    <div class="wrapper">
+      <button class="btn">
+        <a href="{% url 'category_create' %}"><span>Create category</span></a>
+        
+      </button>
+    </div>
+  
+      
     </div>
   </div>
     {% for message in messages %}
@@ -54,8 +78,7 @@
           <th scope="col">Registered by</th>
           <!--<th scope="col">Inflow relations</th>
           <th scope="col">Outflow relations</th>-->
-          <th scope="col">Shares</th>
-        </tr>
+          </tr>
       </thead>
       <tbody>
     {% if categories %}

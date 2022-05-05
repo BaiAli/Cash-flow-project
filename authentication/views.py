@@ -18,6 +18,8 @@ from django.views.generic import ListView
 from django.db.models import Avg, Count, Min, ProtectedError, Sum, CharField, Value
 
 from .models import BankCard, Category, Inflow, Outflow
+from django.db.models import DateTimeField
+from django.db.models.functions import Trunc
 
 
 # Create your views here.
@@ -108,14 +110,58 @@ def why(request):
 
 
 def profile(request):
-    u_form = UserUpdateForm()
-    p_form = ProfileUpdateForm()
+    model = BankCard.objects.all()
+    inflow = Inflow.objects.all()
+    outflow = Outflow.objects.all()
 
-    context = {
-        'u_form': u_form,
-        'p_form': p_form
-    }
-    return render(request, "authentication/profile.html", context)
+    all_balance = 0
+    inflow_balance = 0
+    outflow_balance = 0
+    for i in inflow:
+        inflow_balance += i.value
+    for i in outflow:
+        outflow_balance += i.value
+    for i in model:
+        all_balance += i.cardBalance
+    inflow.order_by(Trunc('registered_at', 'date', output_field=DateTimeField()).desc(), '-value')
+    outflow.order_by(Trunc('registered_at', 'date', output_field=DateTimeField()).desc(), '-value')
+    all_balance += (inflow_balance - outflow_balance)
+    tenge = (all_balance)
+
+    dollar = int(tenge / 434)
+    ruble = int(tenge / 15)
+    if len(outflow) >= 3 and len(inflow) >= 3:
+        return render(request, "authentication/profile.html", {
+            'tenge': int(tenge),
+            'dollar': dollar,
+            'ruble': ruble,
+            'inflow': inflow[len(inflow) - 3:],
+            'outflow': outflow[len(outflow) - 3:]
+        })
+    elif len(inflow) >= 3:
+        return render(request, "authentication/profile.html", {
+            'tenge': int(tenge),
+            'dollar': dollar,
+            'ruble': ruble,
+            'inflow': inflow[len(inflow) - 3:],
+            'outflow': outflow
+        })
+    elif len(outflow) >= 3:
+        return render(request, "authentication/profile.html", {
+            'tenge': int(tenge),
+            'dollar': dollar,
+            'ruble': ruble,
+            'inflow': inflow,
+            'outflow': outflow[len(inflow) - 3:]
+        })
+    else:
+        return render(request, "authentication/profile.html", {
+            'tenge': int(tenge),
+            'dollar': dollar,
+            'ruble': ruble,
+            'inflow': inflow,
+            'outflow': outflow
+        })
 
 
 # class AddNewBankCard(CreateView):
@@ -158,8 +204,8 @@ def addBankName(request):
     if request.method == "POST":
         card_name = request.POST["name"]
 
-        models = BankCard(cardName=card_name, cardBalance=0)
-        models.save()
+        model = BankCard(cardName=card_name, cardBalance=0)
+        model.save()
         return redirect('bankcard')
     return render(request, "authentication/addbankname.html")
 
@@ -219,30 +265,7 @@ def inflow_edit(request, pk):
     )
 
 
-@login_required
-def inflow_delete(request, pk):
-    try:
-        registered_by = request.user.get_username()
-        inflow = Inflow.objects.filter(
-            pk=pk,
-            registered_by=registered_by
-        )
-        if len(inflow) > 0:
-            was_deleted = Inflow.objects.filter(
-                pk=pk,
-                registered_by=registered_by
-            ).delete()
-            if was_deleted:
-                messages.success(request, 'Inflow was deleted!')
-                return render(request, 'authentication/inflow_list.html')
-            else:
-                messages.error(request, 'An error was ocurred!')
-                return render(request, 'authentication/inflow_list.html')
-        else:
-            return HttpResponse('Inflow not found.')
-    except Http404 as e:
-        raise HttpResponse('404' + str(e))
-    return redirect('authentication/inflow_list.html')
+
 
 
 @login_required
@@ -439,34 +462,6 @@ def category_update(request, pk):
     return redirect("category_detail/" + str(pk))
 
 
-def category_delete(request, pk):
-    try:
-        category = Category.objects.filter(
-            pk=pk,
-            registered_by=request.user.get_username()
-        )
-        if len(category) > 0:
-            was_deleted = Category.objects.filter(
-                pk=pk,
-                registered_by=request.user.get_username()
-            ).delete()
-            if was_deleted:
-                messages.success(request, 'Category was deleted!')
-                return render(request, 'authentication/category_list.html')
-            else:
-                messages.error(request, 'An error was occurred!')
-                return render(request, 'authentication/category_list.html')
-        else:
-            return HttpResponse('Category not found.')
-    except ProtectedError as exc:
-        messages.error(
-            request,
-            "Cannot delete some instances of model, because they are referenced through protected foreign keys."
-        )
-    except Http404 as e:
-        raise HttpResponse('404' + str(e))
-    return redirect("authentication/category_list")
-
 
 def category_edit(request, pk):
     try:
@@ -570,29 +565,6 @@ def category_create(request):
     )
 
 
-def outflow_delete(request, pk):
-    try:
-        registered_by = request.user.get_username()
-        outflow = Outflow.objects.filter(
-            pk=pk,
-            registered_by=registered_by
-        )
-        if len(outflow) > 0:
-            was_deleted = Outflow.objects.filter(
-                pk=pk,
-                registered_by=registered_by
-            ).delete()
-            if was_deleted:
-                messages.success(request, 'Outflow was deleted!')
-                return render(request, 'authentication/outflow_list.html')
-            else:
-                messages.error(request, 'An error was ocurred!')
-                return render(request, 'authentication/outflow_list.html')
-        else:
-            return HttpResponse('Outflow not found.')
-    except Http404 as e:
-        raise HttpResponse('404' + str(e))
-    return redirect("authentication/outflow_list")
 
 
 def outflow_update(request, pk):
@@ -692,14 +664,12 @@ def outflow_save(request):
             outflow.registered_at = request.POST['reg_date']
             outflow.registered_by = request.user.username
             outflow.value = request.POST['value']
-            outflow.payment_code = request.POST['payment_code']
-            outflow.billet_code = request.POST['billet_code']
             outflow.save()
 
             messages.success(request, "A new outflow was created!")
     except Exception as exc:
-        messages.error(request, 'Ocorreu um erro' + str(exc))
-        return redirect('authentication/outflow_list')
+        messages.error(request, 'Occurred an error' + str(exc))
+        return redirect('outflow_list')
     return redirect('outflow_list')
 
 
@@ -727,3 +697,94 @@ class DeleteAccountView(DeleteView):
     model = BankCard
     template_name = 'authentication/delete_account.html'
     success_url = reverse_lazy('account')
+
+
+
+
+
+
+def outflow_delete(request, pk):
+    try:
+        registered_by = request.user.get_username()
+        outflow = Outflow.objects.filter(
+            pk=pk,
+            registered_by=registered_by
+        )
+        if len(outflow) > 0:
+            was_deleted = Outflow.objects.filter(
+                pk=pk,
+                registered_by=registered_by
+            ).delete()
+            if was_deleted:
+                messages.success(request, 'Outflow was deleted!')
+                return redirect('outflow_list')
+            else:
+                messages.error(request, 'An error was ocurred!')
+                return redirect('outflow_list')
+        else:
+            return HttpResponse('Outflow not found.')
+    except Http404 as e:
+        raise HttpResponse('404' + str(e))
+    return redirect('outflow_list')
+
+
+
+def category_delete(request, pk):
+    try:
+        category = Category.objects.filter(
+            pk=pk,
+            registered_by=request.user.get_username()
+        )
+        if len(category) > 0:
+            was_deleted = Category.objects.filter(
+                pk=pk,
+                registered_by=request.user.get_username()
+            ).delete()
+            if was_deleted:
+                messages.success(request, 'Category was deleted!')
+                return redirect('category_list')
+            else:
+                messages.error(request, 'An error was occurred!')
+                return redirect('category_list')
+        else:
+            return HttpResponse('Category not found.')
+    except ProtectedError as exc:
+        messages.error(
+            request,
+            "Cannot delete some instances of model, because they are referenced through protected foreign keys."
+        )
+    except Http404 as e:
+        raise HttpResponse('404' + str(e))
+    return redirect('category_list')
+
+
+
+@login_required
+def inflow_delete(request, pk):
+    try:
+        registered_by = request.user.get_username()
+        inflow = Inflow.objects.filter(
+            pk=pk,
+            registered_by=registered_by
+        )
+        if len(inflow) != 0:
+            was_deleted = Inflow.objects.filter(
+                pk=pk,
+                registered_by=registered_by
+            ).delete()
+            if was_deleted:
+                messages.success(request, 'Inflow was deleted!')
+                return redirect('inflow_list')
+            else:
+                messages.error(request, 'An error was occurred!')
+                return redirect('inflow_list')
+        else:
+            return HttpResponse('Inflow not found.')
+    except ProtectedError as exc:
+        messages.error(
+            request,
+            "Cannot delete some instances of model, because they are referenced through protected foreign keys."
+        )
+    except Http404 as e:
+        raise HttpResponse('404' + str(e))
+    return redirect('inflow_list')

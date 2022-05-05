@@ -22,7 +22,7 @@
                 <li>
                     <ul class="account_item">{{ account.cardName }} 
                         <a class="icon1" href="{% url 'delete_account' account.pk %}"><img src="{% static 'authentication/images/icons8-trash.svg' %}" alt=""></a> 
-                        <a class="icon2" href="{% url 'bankcard' %}"><img src="{% static 'authentication/images/icons8-edit.svg' %}" alt=""></a>
+                        <a class="icon2" href="{% url 'bankcard' %}"><img src="{% static 'authentication/images/icons8-edit.svg' %}" alt=""></a> 
                     </ul>
                     
                     <ul class="account_item">{{ account.cardBalance }}</ul>

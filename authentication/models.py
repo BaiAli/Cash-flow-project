@@ -65,8 +65,8 @@ class Profile(models.Model):
     def __str__(self):
         return f'{self.user.username} Profile'
 
-    def save(self):
-        super().save()
+    def save(self, **kwargs):
+        super(Profile, self).save(**kwargs)
 
         img = Image.open(self.image.path)
 
@@ -106,7 +106,7 @@ class BankCard(models.Model):
     cardBalance = models.IntegerField()
     date = models.DateTimeField(auto_now_add=False, null=True)
 
-    def __str__(self):
+    def str(self):
         return self.cardName
 
     def get_absolute_url(self):
@@ -134,8 +134,6 @@ class Outflow(models.Model):
     category = models.ForeignKey(Category, on_delete=models.PROTECT)
     registered_at = models.DateTimeField()
     registered_by = models.CharField(null=False, max_length=55)
-    billet_code = models.IntegerField(null=True, blank=True)
-    payment_code = models.IntegerField(null=True, blank=True)
 
     def __str__(self):
         return self.name
