@@ -5,6 +5,7 @@ from pyexpat import model
 from re import template
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse_lazy
 from django.utils import timezone
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -12,7 +13,7 @@ from django.shortcuts import redirect, render
 from django.contrib.auth.models import User
 from django.contrib import messages
 from .form import UserUpdateForm, ProfileUpdateForm, ContactsForm, BankCardForm
-from django.views.generic.edit import CreateView
+from django.views.generic.edit import CreateView, DeleteView
 from django.views.generic import ListView
 from django.db.models import Avg, Count, Min, ProtectedError, Sum, CharField, Value
 
@@ -128,8 +129,12 @@ def addNewBankCard(request):
         if form.is_valid():
             card_name = form.cleaned_data.get('cardName')
             card_balance = form.cleaned_data.get('cardBalance')
+            # transaction_date = form.cleaned_data.get('date')
 
             model = BankCard.objects.filter(cardName=card_name)
+            # model = BankCard.objects.filter(date=transaction_date)
+
+
             new_balance = model[0].cardBalance + card_balance
             model.update(cardBalance=new_balance)
 
@@ -153,8 +158,8 @@ def addBankName(request):
     if request.method == "POST":
         card_name = request.POST["name"]
 
-        model = BankCard(cardName=card_name, cardBalance=0)
-        model.save()
+        models = BankCard(cardName=card_name, cardBalance=0)
+        models.save()
         return redirect('bankcard')
     return render(request, "authentication/addbankname.html")
 
@@ -717,3 +722,8 @@ def outflow_create(request):
             'no_categories': no_categories,
         }
     )
+
+class DeleteAccountView(DeleteView):
+    model = BankCard
+    template_name = 'authentication/delete_account.html'
+    success_url = reverse_lazy('account')

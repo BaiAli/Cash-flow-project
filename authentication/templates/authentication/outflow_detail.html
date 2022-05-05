@@ -1,7 +1,12 @@
+{% extends './baseProfile.html' %}
+
 {% load static %}
+{% block style %}
+<link href="https://fonts.googleapis.com/css2?family=Hubballi&family=Patua+One&family=Ubuntu:wght@300&display=swap" rel="stylesheet">
+{% endblock %}
 
 {% block content %}
-<div class="container-fluid container-home">
+<div class="container-fluid container-home" style="font-family: 'Ubuntu', sans-serif;">
   {% csrf_token %}
       <h1>Outflow</h1>
       <ul>

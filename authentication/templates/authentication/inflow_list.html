@@ -1,7 +1,14 @@
+{% extends './baseProfile.html' %}
+
+{% load static %}
+{% block style %}
+<link href="https://fonts.googleapis.com/css2?family=Hubballi&family=Patua+One&family=Ubuntu:wght@300&display=swap" rel="stylesheet">
+{% endblock %}
+
 {% load static %}
 
 {% block content %}
-    <div class="container-fluid container-home">
+    <div class="container-fluid container-home" style="font-family: 'Ubuntu', sans-serif;">
     <div class="row">
       <div class="col-md-4">
         <h1>My inflows</h1>
@@ -42,7 +49,9 @@
             <td>{{ inflow.registered_by }}</td>
             <td>{{ inflow.value }}</td>
             <td>
-{#              <button type="button" class="btn btn-outline">#}
+              <a class="icon" href="{% url 'inflow_delete' inflow.id %}"><img src="{% static 'authentication/images/icons8-trash.svg' %}" alt=""></a> 
+              <a class="icon" href="{% url 'inflow_edit' inflow.id %}"><img src="{% static 'authentication/images/icons8-edit.svg' %}" alt=""></a> 
+<!-- {#              <button type="button" class="btn btn-outline">#}
 {#                <a href="{% url 'inflow_detail' inflow.id %}">#}
 {#                  <i class="glyphicon glyphicon-eye-open"></i>#}
 {#                </a>#}
@@ -65,7 +74,7 @@
 {#                <a href="{% url 'inflow_delete' inflow.id %}">#}
 {#                  <i class="glyphicon glyphicon-trash"></i>#}
 {#                </a>#}
-{#              </button>#}
+{#              </button>#} -->
             </td>
         </tr>
         {% endfor %}

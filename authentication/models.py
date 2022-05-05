@@ -104,8 +104,7 @@ class Category(models.Model):
 class BankCard(models.Model):
     cardName = models.CharField(max_length=255, default='coding')
     cardBalance = models.IntegerField()
-
-    # date = models.DateField(auto_now_add=False)
+    date = models.DateTimeField(auto_now_add=False, null=True)
 
     def __str__(self):
         return self.cardName

@@ -38,6 +38,7 @@ urlpatterns = [
     path('outflow_edit/<int:pk>', views.outflow_edit, name='outflow_edit'),
     path('outflow_edit/<int:pk>/update', views.outflow_update, name='outflow_update'),
     path('outflow_edit/<int:pk>/delete', views.outflow_delete, name='outflow_delete'),
+    path('accounts/<int:pk>/delete', views.DeleteAccountView.as_view(), name='delete_account')
 ]
 
 if settings.DEBUG:

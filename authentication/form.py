@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
 from .models import BankCard, Category, Profile, Contacts
-from django.forms import TextInput, Textarea, EmailInput, NumberInput, DateInput
+from django.forms import TextInput, Textarea, EmailInput, NumberInput, DateTimeField
 
 
 
@@ -62,8 +62,9 @@ class BankCardForm(forms.ModelForm):
                 attrs={
                 'class' : 'form-control'
             }),
-            # "date": DateInput(attrs={
+            # "date": forms.DateTimeField(attrs={
             #     'class' : 'form-control',
             #     'placeholder':  "Type date of crating"
             # }),
         }
+
